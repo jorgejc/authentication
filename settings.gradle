@@ -12,7 +12,7 @@ buildCache {
     }
 }
 
-rootProject.name = 'authentication'
+rootProject.name = 'autenticacion'
 
 include ':app-service'
 include ':model'
