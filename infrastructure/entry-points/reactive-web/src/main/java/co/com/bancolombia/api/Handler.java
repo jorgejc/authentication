@@ -1,11 +1,11 @@
 package co.com.bancolombia.api;
 
-import co.com.bancolombia.model.user.User;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.reactive.TransactionalOperator;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
@@ -16,35 +16,26 @@ import reactor.core.publisher.Mono;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class Handler {
+
     private final RequestValidator requestValidator;
     private  final UserUseCase userUseCase;
     private final UserDTOMapper userDTOMapper;
-//private  final UseCase2 useCase2;
+    private final TransactionalOperator transactionalOperator;
 
     public Mono<ServerResponse> saveUseCase(ServerRequest serverRequest) {
-
         return serverRequest.bodyToMono(CreateUserRecord.class)
+                .doOnNext(request -> log.info("Starting user creation with email: {}", request.email()))
                 .flatMap(requestValidator::validateUser)
                 .map(userDTOMapper::toModel)
-                .flatMap(userUseCase::saveUser)
+                .flatMap(userUseCase::register)
+                .doOnNext(savedUser -> log.info("User successfully created with ID: {}", savedUser.getUserId()))
                 .flatMap(saveUser -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue(userDTOMapper.toResponse(saveUser)));
+                        .bodyValue(userDTOMapper.toResponse(saveUser))).as(transactionalOperator::transactional)
+                .doOnError(error -> log.error("Error creating user", error.getMessage()));
     }
 
-    public Mono<ServerResponse> listenGETUseCase(ServerRequest serverRequest) {
-        // useCase.logic();
-        return ServerResponse.ok().bodyValue("");
-    }
 
-    public Mono<ServerResponse> listenGETOtherUseCase(ServerRequest serverRequest) {
-        // useCase2.logic();
-        return ServerResponse.ok().bodyValue("");
-    }
-
-    public Mono<ServerResponse> listenPOSTUseCase(ServerRequest serverRequest) {
-        // useCase.logic();
-        return ServerResponse.ok().bodyValue("");
-    }
 }

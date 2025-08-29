@@ -1,4 +1,4 @@
-package co.com.bancolombia.model.user.exception;
+package co.com.bancolombia.model.exception;
 
 public class ValidationException extends RuntimeException {
 
@@ -6,6 +6,8 @@ public class ValidationException extends RuntimeException {
         super(message);
     }
 
-    // globalexception reactivos
-    // TransactionalOperator
+    public ValidationException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
 }

@@ -12,8 +12,6 @@ public interface UserRepository {
 
     Flux<User>  findAll();
 
-    Mono<Void> deleteById(String id);
-
     Mono<Boolean> existsByEmail(String email);
 
 }
