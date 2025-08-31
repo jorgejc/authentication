@@ -1,5 +1,10 @@
 package co.com.bancolombia.api;
 
+import co.com.bancolombia.model.exception.ValidationException;
+import jakarta.validation.Constraint;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Valid;
+import jakarta.validation.Validation;
 import lombok.RequiredArgsConstructor;
 
 import lombok.extern.slf4j.Slf4j;
@@ -14,9 +19,13 @@ import co.com.bancolombia.api.mapper.UserDTOMapper;
 import co.com.bancolombia.usecase.user.UserUseCase;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+import java.util.Set;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@Valid
 public class Handler {
 
     private final RequestValidator requestValidator;
@@ -27,6 +36,7 @@ public class Handler {
     public Mono<ServerResponse> saveUseCase(ServerRequest serverRequest) {
         return serverRequest.bodyToMono(CreateUserRecord.class)
                 .doOnNext(request -> log.info("Starting user creation with email: {}", request.email()))
+                .flatMap(this::validateRequest)
                 .flatMap(requestValidator::validateUser)
                 .map(userDTOMapper::toModel)
                 .flatMap(userUseCase::register)
@@ -35,6 +45,16 @@ public class Handler {
                         .contentType(MediaType.APPLICATION_JSON)
                         .bodyValue(userDTOMapper.toResponse(saveUser))).as(transactionalOperator::transactional)
                 .doOnError(error -> log.error("Error creating user", error.getMessage()));
+    }
+
+    private Mono<CreateUserRecord> validateRequest(CreateUserRecord request) {
+        Set<ConstraintViolation<CreateUserRecord>> violations = Validation.buildDefaultValidatorFactory()
+                .getValidator().validate(request);
+        if (!violations.isEmpty()) {
+            List<String> errorMessages = violations.stream().map(ConstraintViolation::getMessage).toList();
+            return Mono.error(new ValidationException("Validation errors:" + String.join(",", errorMessages)));
+        }
+        return Mono.just(request);
     }
 
 

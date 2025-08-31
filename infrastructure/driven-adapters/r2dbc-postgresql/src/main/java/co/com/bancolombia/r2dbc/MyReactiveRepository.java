@@ -11,5 +11,5 @@ public interface MyReactiveRepository extends ReactiveCrudRepository<UserEntity,
 
     Mono<Void> deleteByUserId(String id);
     Mono<Boolean> existsByEmail(String email);
-
+    Mono<Boolean> existsByDocumentId(String documentId);
 }

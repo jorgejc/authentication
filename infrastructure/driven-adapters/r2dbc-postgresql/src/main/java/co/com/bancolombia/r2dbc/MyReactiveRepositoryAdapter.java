@@ -23,4 +23,9 @@ public class MyReactiveRepositoryAdapter extends ReactiveAdapterOperations
     public Mono<Boolean> existsByEmail(String email) {
         return repository.existsByEmail(email);
     }
+
+    @Override
+    public Mono<Boolean> existsByDocumentId(String documentId) {
+        return repository.existsByDocumentId(documentId);
+    }
 }

@@ -1,5 +1,6 @@
 package co.com.bancolombia.usecase.user;
 
+import co.com.bancolombia.model.exception.DuplicateDocumentException;
 import co.com.bancolombia.model.exception.DuplicateEmailException;
 import co.com.bancolombia.model.exception.ValidationException;
 import co.com.bancolombia.model.user.User;
@@ -17,14 +18,19 @@ public class UserUseCase implements IUserUseCase {
 
     @Override
     public Mono<User> register(User user) {
-
         return userRepository.existsByEmail(user.getEmail())
-                .flatMap(exists -> {
-            if (Boolean.TRUE.equals(exists))
-                return Mono.error(new DuplicateEmailException(user.getEmail()));
-
-            return userRepository.save(user);
-        });
+                .flatMap(emailExists -> {
+                    if (Boolean.TRUE.equals(emailExists)) {
+                        return Mono.error(new DuplicateEmailException(user.getEmail()));
+                }
+                return userRepository.existsByDocumentId(user.getDocumentId());
+            })
+            .flatMap(docExist -> {
+                if (Boolean.TRUE.equals(docExist)) {
+                    return Mono.error(new DuplicateDocumentException("Document ID already exists: " + user.getDocumentId()));
+                }
+                return userRepository.save(user);
+            });
     }
 
     @Override
