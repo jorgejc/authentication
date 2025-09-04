@@ -2,6 +2,7 @@ package co.com.bancolombia.usecase.user;
 
 import co.com.bancolombia.model.exception.DuplicateDocumentException;
 import co.com.bancolombia.model.exception.DuplicateEmailException;
+import co.com.bancolombia.model.exception.ValidationException;
 import co.com.bancolombia.model.user.User;
 import co.com.bancolombia.model.user.gateways.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
