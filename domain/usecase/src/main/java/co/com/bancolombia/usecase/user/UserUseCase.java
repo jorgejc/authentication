@@ -43,4 +43,8 @@ public class UserUseCase implements IUserUseCase {
         return userRepository.findAll();
     }
 
+    public Mono<Boolean> existsUserByEmail(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
 }

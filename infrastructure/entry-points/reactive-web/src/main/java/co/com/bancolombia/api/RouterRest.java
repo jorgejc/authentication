@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.RouterOperation;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,11 +14,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
-import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
 @Configuration
-@RequiredArgsConstructor
 public class RouterRest {
 
     @Bean
@@ -30,8 +27,8 @@ public class RouterRest {
             beanMethod = "saveUseCase",
             operation = @Operation(
                     operationId = "createUser",
-                    summary = "Registrar usuario",
-                    description = "Registrar un usuario nuevo y devuelve su representación",
+                    summary = "register user",
+                    description = "register new user",
                     requestBody = @RequestBody(
                             required = true,
                             content = @Content(schema = @Schema(implementation = CreateUserRecord.class))
@@ -39,15 +36,18 @@ public class RouterRest {
                     responses = {
                             @ApiResponse(
                                     responseCode = "201",
-                                    description = "Usuario creado",
+                                    description = "create user",
                                     content = @Content(schema = @Schema(implementation = UserRecordResponse.class))
                             ),
-                            @ApiResponse(responseCode = "400", description = "Error validación"),
-                            @ApiResponse(responseCode = "409", description = "Conflicto (duplicado)")
+                            @ApiResponse(responseCode = "400", description = "Error validation"),
+                            @ApiResponse(responseCode = "409", description = "Conflict (duplicate)")
                     }
             )
     )
     public RouterFunction<ServerResponse> routerFunction(Handler handler) {
-        return route(POST("/api/v1/users"), handler::saveUseCase);
+        return route()
+                .POST("/api/v1/users"),handler::saveUseCase)
+                .GET("/api/v1/users/email/{email}/exists", handler::existsByEmailUseCase).build();
+
     }
 }

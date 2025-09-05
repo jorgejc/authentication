@@ -57,5 +57,13 @@ public class Handler {
         return Mono.just(request);
     }
 
+    public Mono<ServerResponse> existsByEmailUseCase(ServerRequest serverRequest) {
+        String email = serverRequest.pathVariable("email");
+        log.info("Checking if a user exists with email: {}", email);
+        return userUseCase.existsUserByEmail(email)
+                .flatMap(exists -> ServerResponse.ok()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue("{\"existsUser\": " + exists + "}"));
+    }
 
 }
