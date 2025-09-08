@@ -19,6 +19,10 @@ public class RequestValidator {
             var errors = new BeanPropertyBindingResult(dto, dto.getClass().getName());
             validator.validate(dto, errors);
             if (errors.hasErrors()) {
+                String detail = errors.getAllErrors().stream()
+                        .map(e -> e.getDefaultMessage())
+                        .reduce((a, b) -> a + "; " + b)
+                        .orElse("application submitted");
                 throw new ValidationException(errors.toString());
             }
             return dto;
