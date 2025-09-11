@@ -1,7 +1,6 @@
 package co.com.bancolombia.api;
 
 import co.com.bancolombia.model.exception.ValidationException;
-import jakarta.validation.Constraint;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
 import jakarta.validation.Validation;
