@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.UUID;
+
 @RequiredArgsConstructor
 public class UserUseCase implements IUserUseCase {
 
@@ -22,15 +24,15 @@ public class UserUseCase implements IUserUseCase {
                 .flatMap(emailExists -> {
                     if (Boolean.TRUE.equals(emailExists)) {
                         return Mono.error(new DuplicateEmailException(user.getEmail()));
-                }
-                return userRepository.existsByDocumentId(user.getDocumentId());
-            })
-            .flatMap(docExist -> {
-                if (Boolean.TRUE.equals(docExist)) {
-                    return Mono.error(new DuplicateDocumentException("Document ID already exists: " + user.getDocumentId()));
-                }
-                return userRepository.save(user);
-            });
+                    }
+                    return userRepository.existsByDocumentId(user.getDocumentId());
+                })
+                .flatMap(docExist -> {
+                    if (Boolean.TRUE.equals(docExist)) {
+                        return Mono.error(new DuplicateDocumentException("Document ID already exists: " + user.getDocumentId()));
+                    }
+                    return userRepository.save(user);
+                });
     }
 
     @Override

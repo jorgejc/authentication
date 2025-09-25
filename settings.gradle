@@ -24,3 +24,5 @@ include ':reactive-web'
 project(':reactive-web').projectDir = file('./infrastructure/entry-points/reactive-web')
 include ':r2dbc-postgresql'
 project(':r2dbc-postgresql').projectDir = file('./infrastructure/driven-adapters/r2dbc-postgresql')
+include ':token-provider-jwt'
+project(':token-provider-jwt').projectDir = file('./infrastructure/driven-adapters/token-provider-jwt')

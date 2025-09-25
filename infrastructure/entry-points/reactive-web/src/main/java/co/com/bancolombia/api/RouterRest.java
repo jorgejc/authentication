@@ -1,5 +1,6 @@
 package co.com.bancolombia.api;
 
+import co.com.bancolombia.api.auth.AuthenticationHandler;
 import co.com.bancolombia.api.dto.request.CreateUserRecord;
 import co.com.bancolombia.api.dto.response.UserRecordResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,12 +46,36 @@ public class RouterRest {
                                     @ApiResponse(responseCode = "409", description = "Conflict (duplicate)")
                             }
                     )
+            ),
+            @RouterOperation(
+                    path = "/api/v1/login",
+                    method = RequestMethod.POST,
+                    beanClass = co.com.bancolombia.api.auth.AuthenticationHandler.class,
+                    beanMethod = "authenticate",
+                    operation = @Operation(
+                            operationId = "login",
+                            summary = "Authentication",
+                            description = "Receives the user's credentials, validates them, and generates a JWT token if authentication is successful.",
+                            requestBody = @RequestBody(
+                                    required = true,
+                                    content = @Content(schema = @Schema(implementation = co.com.bancolombia.api.dto.request.AuthenticateRequest.class))
+                            ),
+                            responses = {
+                                    @ApiResponse(responseCode = "200", description = "Auth OK",
+                                            content = @Content(schema = @Schema(implementation = co.com.bancolombia.api.dto.response.AuthenticateResponse.class))),
+                                    @ApiResponse(responseCode = "400", description = "Invalid petition"),
+                                    @ApiResponse(responseCode = "401", description = "Invalid credentials"),
+                                    @ApiResponse(responseCode = "503", description = "External service unavailable")
+                            }
+                    )
             )
     })
-    public RouterFunction<ServerResponse> routerFunction(Handler handler) {
+    public RouterFunction<ServerResponse> routerFunction(Handler handler, AuthenticationHandler authenticationHandler) {
         return route()
                 .POST("/api/v1/users",handler::saveUseCase)
-                .GET("/api/v1/users/email/{email}/exists", handler::existsByEmailUseCase).build();
+                .GET("/api/v1/users/email/{email}/exists", handler::existsByEmailUseCase)
+                .POST("/api/v1/login", authenticationHandler::authenticate)
+                .build();
 
     }
 }

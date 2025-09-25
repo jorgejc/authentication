@@ -29,5 +29,8 @@ public record CreateUserRecord(
         @NotNull(message = "The base salary cannot be zero")
         @DecimalMin(value = "0.0", inclusive = false, message = "The base salary cannot be a negative value")
         @DecimalMax(value = "15000001", inclusive = false, message = "The base salary cannot be greater than 15,000,000")
-        BigDecimal baseSalary
+        BigDecimal baseSalary,
+
+        long rolId,
+        String encodedPassword
 ) {}

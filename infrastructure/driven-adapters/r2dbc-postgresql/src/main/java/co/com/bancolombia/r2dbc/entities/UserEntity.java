@@ -10,7 +10,6 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.time.LocalDate;
 
 @Table("users")
@@ -44,6 +43,9 @@ public class UserEntity {
 private BigDecimal baseSalary;
 
     @Column("rol_id")
-    private String rolId;
+    private Integer rolId;
+
+    @Column("password")
+    private String password;
 
 }

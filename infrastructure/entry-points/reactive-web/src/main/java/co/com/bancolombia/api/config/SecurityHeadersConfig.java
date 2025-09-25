@@ -1,15 +1,27 @@
 package co.com.bancolombia.api.config;
 
-import org.springframework.http.HttpHeaders;
-import org.springframework.stereotype.Component;
-import org.springframework.web.server.ServerWebExchange;
-import org.springframework.web.server.WebFilter;
-import org.springframework.web.server.WebFilterChain;
-import reactor.core.publisher.Mono;
+ import org.springframework.http.HttpHeaders;
+ import org.springframework.stereotype.Component;
+ import org.springframework.web.server.ServerWebExchange;
+ import org.springframework.web.server.WebFilter;
+ import org.springframework.web.server.WebFilterChain;
+ import reactor.core.publisher.Mono;
 
+/**
+ * <b>Descripción:</b> Clase que determina
+ * <br>
+ * <b>Caso de Uso:</b>
+ *
+ * @author Jorge Armando Julio Cruz <jjulio@heinsohn.com.co>
+ */
 @Component
 public class SecurityHeadersConfig implements WebFilter {
 
+    /**
+     * @param exchange
+     * @param chain
+     * @return
+     */
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         HttpHeaders headers = exchange.getResponse().getHeaders();

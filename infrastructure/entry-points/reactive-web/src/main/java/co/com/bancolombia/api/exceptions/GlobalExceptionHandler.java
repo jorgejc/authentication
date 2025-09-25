@@ -20,13 +20,44 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.List;
 
+/**
+ * <b>Descripción:</b> Clase que determina el manejador global de excepciones para aplicaciones Spring WebFlux que
+ * intercepta y procesa todas las excepciones no manejadas en la aplicación, proporcionando
+ * respuestas HTTP estructuradas y consistentes para diferentes tipos de errores.
+ * <br>
+ * <b>HU01 - HU03:</b>Agregar Autenticación al sistema - Registrar usuarios en el sistema
+ *
+ * @author Jorge Armando Julio Cruz
+ */
 @Component
 @Order(-2)
 @Slf4j
 public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
 
+    /**
+     * Atributo que determina el mapper de Jackson para serialización JSON de las respuestas de error.
+     * Se inicializa con configuración por defecto.
+     */
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    /**
+     * Maneja todas las excepciones no capturadas en la aplicación y las convierte en
+     * respuestas HTTP apropiadas con formato JSON estándar.
+     * * <p><b>Tipos de Excepciones Manejadas:</b></p>
+     * <ul>
+     * <li><b>Seguridad:</b> AccessDeniedException, InvalidBearerTokenException, AuthenticationException</li>
+     * <li><b>Credenciales:</b> InvalidCredentialsException</li>
+     * <li><b>Validación:</b> ValidationException, WebExchangeBindException, Jakarta ValidationException</li>
+     * <li><b>Duplicados:</b> DuplicateEmailException, DuplicateDocumentException</li>
+     * <li><b>Base de Datos:</b> DataIntegrityViolationException</li>
+     * <li><b>JSON:</b> JsonParseException</li>
+     * <li><b>Genéricas:</b> Cualquier otra excepción no especificada</li>
+     * </ul>
+     *
+     * @param exchange, contexto del intercambio web reactivo que contiene request y response.
+     * @param ex, ex Excepción que será procesada y convertida en respuesta HTTP.
+     * @return Mono&lt;Void&gt; Mono vacío que representa la escritura completa de la respuesta HTTP.
+     */
     @Override
     public Mono<Void> handle(ServerWebExchange exchange, Throwable ex) {
 
@@ -36,10 +67,40 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
         ErrorResponse errorResponse;
         HttpStatus status;
 
-        if (ex instanceof DuplicateEmailException) {
+        if (ex instanceof org.springframework.security.access.AccessDeniedException) {
+            status = HttpStatus.FORBIDDEN;
+            errorResponse = new ErrorResponse(403, "Acceso denegado - No tienes permisos suficientes");
+            log.warn("Acceso denegado: {}", ex.getMessage());
+
+        } else if (ex instanceof org.springframework.security.oauth2.server.resource.InvalidBearerTokenException) {
+            status = HttpStatus.UNAUTHORIZED;
+            errorResponse = new ErrorResponse(401, "Token inválido o expirado");
+            log.warn("Token inválido: {}", ex.getMessage());
+
+        } else if (ex instanceof org.springframework.security.core.AuthenticationException) {
+            status = HttpStatus.UNAUTHORIZED;
+            errorResponse = new ErrorResponse(401, "Credenciales inválidas");
+            log.warn("Error de autenticación: {}", ex.getMessage());
+
+        } else if (ex instanceof co.com.bancolombia.model.exception.InvalidCredentialsException) {
+            status = HttpStatus.UNAUTHORIZED;
+            errorResponse = new ErrorResponse(401, "Credenciales inválidas");
+            log.warn("Intento de login con credenciales inválidas: {}", ex.getMessage());
+
+        } else if (ex instanceof co.com.bancolombia.model.exception.ValidationException) {
+            status = HttpStatus.INTERNAL_SERVER_ERROR;
+            errorResponse = new ErrorResponse(500, "Error interno de datos");
+            log.error("Inconsistencia de datos: {}", ex.getMessage(), ex);
+
+        } if (ex instanceof DuplicateEmailException) {
             status = HttpStatus.CONFLICT;
             errorResponse = new ErrorResponse(409, "Email is not available");
             log.warn("duplicate email: {}", ex.getMessage());
+
+        } else if (ex instanceof co.com.bancolombia.model.exception.DuplicateDocumentException) {
+                status = HttpStatus.CONFLICT;
+                errorResponse = new ErrorResponse(409, "The identity document is already registered");
+                log.warn("Duplicate document: {}", ex.getMessage());
 
         } else if (ex instanceof DataIntegrityViolationException) {
             status = HttpStatus.BAD_REQUEST;
@@ -55,7 +116,6 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
             log.warn("Error de integridad de datos: {}", ex.getMessage());
 
         } else if (ex instanceof ValidationException) {
-            status = HttpStatus.BAD_REQUEST;
             status = HttpStatus.BAD_REQUEST;
             String message = ex.getMessage();
             log.warn("validation error: {}", ex.getMessage());

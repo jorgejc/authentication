@@ -1,14 +1,10 @@
 package co.com.bancolombia.api;
 
-import co.com.bancolombia.model.exception.ValidationException;
-import jakarta.validation.Constraint;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Valid;
-import jakarta.validation.Validation;
 import lombok.RequiredArgsConstructor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -19,13 +15,20 @@ import co.com.bancolombia.api.mapper.UserDTOMapper;
 import co.com.bancolombia.usecase.user.UserUseCase;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-import java.util.Set;
-
+/**
+ * <b>Descripción:</b> Clase que determina la gestión de usuarios del sistema CrediYa.
+ * Maneja las operaciones HTTP relacionadas con usuarios, incluyendo registro
+ * y verificación de existencia por email. Implementa validaciones reactivas
+ * y control de acceso basado en roles.
+ * <br>
+ * <b>HU01:</b> Registrar usuarios en el sistema
+ *
+ * @author Jorge Armando Julio Cruz <jjulio@heinsohn.com.co>
+ * @version 1.0
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Valid
 public class Handler {
 
     private final RequestValidator requestValidator;
@@ -33,11 +36,23 @@ public class Handler {
     private final UserDTOMapper userDTOMapper;
     private final TransactionalOperator transactionalOperator;
 
+    /**
+     * Método encargado de registrar un nuevo usuario en el sistema.
+     * Este endpoint permite a administradores y asesores registrar nuevos usuarios.
+     * Valida los datos de entrada, procesa el registro y retorna la información
+     * del usuario creado.
+     * <br>
+     * <b>HU01-HU03:</b> Registrar usuarios en el sistema
+     *
+     * @param serverRequest, solicitud HTTP que contiene los datos del usuario
+     * @return Mono&lt;ServerResponse&gt; Respuesta con el usuario registrado o error
+     * @author Jorge Armando Julio Cruz <jjulio@heinsohn.com.co>
+     */
+    @PreAuthorize("hasAnyRole('ADMIN', 'ASESOR')")
     public Mono<ServerResponse> saveUseCase(ServerRequest serverRequest) {
         return serverRequest.bodyToMono(CreateUserRecord.class)
                 .doOnNext(request -> log.info("Starting user creation with email: {}", request.email()))
-                .flatMap(this::validateRequest)
-                .flatMap(requestValidator::validateUser)
+                .flatMap(requestValidator::validate)
                 .map(userDTOMapper::toModel)
                 .flatMap(userUseCase::register)
                 .doOnNext(savedUser -> log.info("User successfully created with ID: {}", savedUser.getUserId()))
@@ -47,16 +62,15 @@ public class Handler {
                 .doOnError(error -> log.error("Error creating user", error.getMessage()));
     }
 
-    private Mono<CreateUserRecord> validateRequest(CreateUserRecord request) {
-        Set<ConstraintViolation<CreateUserRecord>> violations = Validation.buildDefaultValidatorFactory()
-                .getValidator().validate(request);
-        if (!violations.isEmpty()) {
-            List<String> errorMessages = violations.stream().map(ConstraintViolation::getMessage).toList();
-            return Mono.error(new ValidationException("Validation errors:" + String.join(",", errorMessages)));
-        }
-        return Mono.just(request);
-    }
-
+    /**
+     * Método encargado de verificar si existe un usuario con el email especificado.
+     * <br>
+     * <b>Caso de Uso:</b>
+     *
+     * @param serverRequest
+     * @return
+     * @author Jorge Armando Julio Cruz <jjulio@heinsohn.com.co>
+     */
     public Mono<ServerResponse> existsByEmailUseCase(ServerRequest serverRequest) {
         String email = serverRequest.pathVariable("email");
         log.info("Checking if a user exists with email: {}", email);
